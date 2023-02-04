@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <thread>
+#include "addr.hpp"
 
 
 
@@ -67,51 +68,44 @@ void str_fill(char *str, unsigned long offset, char *substr, unsigned long subst
 
 
 int main() {
+    timespec time1, time2;
+
+    unsigned int address = (62 << 24) + (144 << 16) + (67 << 8) + 172;
+    unsigned short port = 25820;
+    char *addr = new char[15];
+
+    clock_gettime(CLOCK_REALTIME, &time1);
+
+    for(unsigned short i = 0; i < 10000; i++) invert16(&port);
+
+    clock_gettime(CLOCK_REALTIME, &time2);
+
+    //uint32_to_str(address, addr, 0);
+
+    //std::cout << (unsigned char)addr[0]+0 << " "  << (unsigned char)addr[1]+0 << " " << (unsigned char)addr[2]+0 << " " << (unsigned char)addr[3]+0 << "\n";
+    std::cout << port << "\n" << (double)(time2.tv_nsec - time1.tv_nsec) / (double)10000 << "\n";
+    exit(0);
 
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     sockaddr_in server_addr, sender_addr;
     unsigned int sender_len = sizeof(sender_addr);
     char *request, *response = new char[4];
     int request_len, response_len;
-    unsigned short request_id = 0, request_count = 0, domen_len = 0, domen_part_len = 0;
+    unsigned short request_id = 0, request_count = 0, domen_len = 0, domen_part_len = 0, data_len;
     unsigned char byte;
-    timespec time1, time2;
+    
     char* domen = "moder.nk-sys.ru";
-    unsigned int pointer, data_len;
+    unsigned int pointer;
 
-    /*char* str = new char[8];
-    unsigned short num = 53482;
-    
-    for(;;) {
-
-    clock_gettime(CLOCK_REALTIME, &time1);
-    
-    for(unsigned long i = 0; i < 1000000000; i++) {
-        uint16_to_str(num, str, 0);
-    }
-
-    clock_gettime(CLOCK_REALTIME, &time2);
-    long nsec = time2.tv_nsec - time1.tv_nsec;
-
-    if(nsec < 0) {
-        nsec *= -1;
-        nsec += 1000000000;
-    }
-
-    std::cout << "converted in: " << (double)((time2.tv_sec - time1.tv_sec) * 1000000000 + nsec) / (double)1000000000 << " nano seconds\n";
-
-    sleep(1);
-
-    //exit(0);
-
-    }
-
-    exit(0);*/
+    struct dns_info {
+        short TYPE, CLASS;
+        unsigned int TTL, IPv4;
+    };
 
     
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr("8.8.8.8");
-    server_addr.sin_port = htons(53);
+    server_addr.sin_port = 53 << 8;
 
     for(;;) {
 
@@ -184,10 +178,11 @@ int main() {
 
         std::cout << response_len;
 
-        pointer = 12+domen_len+2+4+10-1;
+        pointer = 12+domen_len+2+4+10;
+        std::cout << "\n" << pointer << "\n";
         for(unsigned short i = 0; i < response_len; i++ ) std::cout << i << " - " << response[i] << "(" << (unsigned char)response[i]+0 << ")\n";
 
-        str_to_uint32(response, pointer, &data_len);
+        str_to_uint16(response, pointer, &data_len);
         std::cout << pointer << " " << data_len << "\n";
         exit(0);
         for(unsigned short i = pointer; i < pointer+data_len; i++ ) std::cout << i << " - " << response[i] << "(" << (unsigned char)response[i]+0 << ")\n";
